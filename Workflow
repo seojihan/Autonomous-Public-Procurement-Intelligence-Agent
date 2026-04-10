@@ -1,0 +1,824 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoServcPurchsObjPrdct?serviceKey=YOUR_PUBLIC_DATA_API_KEY&numOfRows=10&pageNo=1&inqryDiv=1&type=json&inqryBgnDt={{ $today.minus({ days: 1 }).format('yyyyMMdd') }}0000&inqryEndDt={{ $today.format('yyyyMMdd') }}2359",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "serviceKey",
+              "value": "YOUR_PUBLIC_DATA_API_KEY"
+            },
+            {
+              "name": "numOfRows",
+              "value": "10"
+            },
+            {
+              "name": "pageNo",
+              "value": "1"
+            },
+            {
+              "name": "inquiryServiceDt",
+              "value": "={{ $today.format('yyyyMMdd') }}"
+            },
+            {
+              "name": "type",
+              "value": "json"
+            },
+            {
+              "name": "bidNtceNm",
+              "value": "={{ $json.keyword }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        160
+      ],
+      "id": "c1cf08d0-d216-4a47-9042-c4cce14d6944",
+      "name": "18",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "=monitored_keywords"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -80
+      ],
+      "id": "0f04167d-1354-4d92-939a-ac32764f0627",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AXfDBvuu6X36mRaL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 노드 이름 앞의 '보이지 않는 공백'까지 완벽하게 맞춘 데이터 로드\n// 이름이 틀리면 에러가 나므로, 사용자님 화면의 실제 이름을 100% 반영했습니다.\nconst bidNode = $(\"HTTP Request1\").first().json;\nconst licenseNode = $(\" License API (15번)\").first().json; // 💡 앞에 공백 한 칸 추가!\nconst regionNode = $(\"Region API (16번)\").first().json;\nconst itemNode = $(\"18\").first().json;\nconst keywordNode = $(\"Get many rows\").first().json;\n\n// 2. 데이터 알맹이 꺼내기 (안전장치 ?. 포함)\nconst baseInfo = bidNode.response?.body?.items?.[0] || {};\nconst licenses = licenseNode.response?.body?.items || [];\nconst regions = regionNode.response?.body?.items || [];\nconst items = itemNode.response?.body?.items || [];\n\n// 3. 한글 파일 분석 없이 'API 팩트'만 합쳐서 내보내기\nreturn [{\n    bid_no: baseInfo.bidNtceNo || \"번호없음\",\n    bid_name: baseInfo.bidNtceNm || \"제목없음\",\n    price: baseInfo.asignBdgtAmt || 0,\n    detail_url: baseInfo.bidNtceDtlUrl || \"\",\n    license_limit: licenses,\n    region_limit: regions,\n    purchase_items: items,\n    // 🔥 한글 파일 분석은 배제하고 팩트 체크용 안내 문구만 남김\n    rfp_text: \"API 데이터 기반 분석 리포트 (상세 내용은 원본 링크 참조)\",\n    user_id: keywordNode.user_id\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        -272
+      ],
+      "id": "e2a35482-062f-4e69-8a2e-170e841bfd6e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL_ADDRESS",
+        "subject": "=[SmartSeller AI] 오늘자 판매 코칭 리포트 ({{ $today }})",
+        "message": "=<div style=\"font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; padding: 30px; color: #333;\">\n  <div style=\"max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e1e4e8; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);\">\n    \n    <!-- 상단 헤더 -->\n    <div style=\"background-color: #1a237e; padding: 20px; text-align: center;\">\n      <h2 style=\"color: #ffffff; margin: 0; font-size: 20px;\">🚀 오늘의 입찰 전략 리포트</h2>\n    </div>\n\n    <!-- 리포트 본문 -->\n    <div style=\"padding: 30px; line-height: 1.8;\">\n      <div style=\"white-space: pre-wrap; font-size: 15px;\">\n        {{ $('Message a model1').item.json.content.parts[0].text }}\n      </div>\n    </div>\n\n    <!-- 하단 푸터 -->\n    <div style=\"background-color: #f8f9fa; padding: 15px; text-align: center; border-top: 1px solid #eee; font-size: 12px; color: #888;\">\n      대표님, 상세 분석 리포트는 첨부된 <b>PDF 파일</b>을 확인해 주세요.\n    </div>\n  </div>\n</div>",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2208,
+        -224
+      ],
+      "id": "9d4d7d4f-c0c2-4ba4-a22d-da95d1ffd07e",
+      "name": "Send a message",
+      "webhookId": "13330836-d33b-462d-8537-a195c84c366d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bEq28juNdCNeAn1k",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 19
+            },
+            {
+              "triggerAtHour": 1
+            },
+            {
+              "triggerAtHour": 8
+            },
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        -80
+      ],
+      "id": "6edeb61a-c836-4526-84b0-2495e13a4861",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 서버 시간이 어디든 무조건 한국 시간과 날짜를 계산\nconst kstNow = $now.setZone('Asia/Seoul');\nconst kstHour = kstNow.hour;\nconst kstDate = kstNow.toFormat('yyyy-MM-dd'); \n\nlet timeLabel = \"\";\nlet isEvening = false;\n\n// 2. 4타임 판별 로직 (새벽 추가!)\nif (kstHour >= 1 && kstHour <= 5) {\n  timeLabel = \"Dawn\";        // 새벽 수집\n} else if (kstHour >= 8 && kstHour <= 11) {\n  timeLabel = \"Morning\";     // 아침 수집\n} else if (kstHour >= 14 && kstHour <= 17) {\n  timeLabel = \"Afternoon\";   // 점심 수집\n} else if (kstHour >= 21 && kstHour <= 23) {\n  timeLabel = \"Evening\";     // 저녁 수집 + 보고서 발송\n  isEvening = true; \n} else {\n  timeLabel = \"Manual_Test\";\n}\n\nreturn items.map(item => {\n  return {\n    json: {\n      ...item.json,\n      timeLabel: timeLabel,\n      isEvening: isEvening,\n      kstDate: kstDate\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -272
+      ],
+      "id": "3a4f47ca-aef0-4e2b-ba75-0e245ccc4b07",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "tableId": "bid_snapshots",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "bid_no",
+              "fieldValue": "={{ $node[\"HTTP Request1\"].json.response.body.items[0].bidNtceNo }}"
+            },
+            {
+              "fieldId": "bid_name",
+              "fieldValue": "={{ $node[\"HTTP Request1\"].json.response.body.items[0].bidNtceNm }}"
+            },
+            {
+              "fieldId": "price",
+              "fieldValue": "={{ $node[\"HTTP Request1\"].json.response.body.items[0].asignBdgtAmt || 0 }}"
+            },
+            {
+              "fieldId": "detail_url",
+              "fieldValue": "={{ $node[\"HTTP Request1\"].json.response.body.items[0].bidNtceDtlUrl }}"
+            },
+            {
+              "fieldId": "check_time",
+              "fieldValue": "={{ new Date().getHours() < 12 ? \"Morning\" : (new Date().getHours() < 18 ? \"Afternoon\" : \"Evening\") }}"
+            },
+            {
+              "fieldId": "keyword_used",
+              "fieldValue": "={{ $node[\"Get many rows\"].json.keyword }}"
+            },
+            {
+              "fieldId": "license_limit",
+              "fieldValue": "={{ $(' License API (15번)').item.json.response.body.items }}"
+            },
+            {
+              "fieldId": "region_limit",
+              "fieldValue": "={{ $node[\"Region API (16번)\"].json.response?.body?.items || [] }}"
+            },
+            {
+              "fieldId": "purchase_items",
+              "fieldValue": "={{ $(\"18\").item.json.response?.body?.items || [] }}"
+            },
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $node[\"Get many rows\"].json.user_id }}"
+            },
+            {
+              "fieldId": "rfp_text",
+              "fieldValue": "={{ $input.item.json.data || \"\" }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        464,
+        -272
+      ],
+      "id": "1cb4a013-6b09-4c9d-a240-1db2d9a533f0",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AXfDBvuu6X36mRaL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ee8fabc3-41be-470b-86a3-626ead34ccca",
+              "leftValue": "={{ $now.hour }}",
+              "rightValue": "=8",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        944,
+        -80
+      ],
+      "id": "b56b60b7-6266-481f-bb95-1cd230e0d444",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "bid_snapshots",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "is_sent",
+              "condition": "eq",
+              "keyValue": "=false"
+            },
+            {
+              "keyName": "user_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        -496
+      ],
+      "id": "0a520ec2-2f02-45e5-9b9a-7bcfad19afdd",
+      "name": "Get many rows1",
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "AXfDBvuu6X36mRaL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. DB에서 가져온 오늘치 상세 공고 리스트 (이전 노드: Get many rows1)\nconst allItems = $input.all().map(i => i.json);\n\n// 2. 현재 루프를 돌고 있는 사장님 프로필 가져오기 (노드 이름 user loof 확인 ⭐)\nconst profile = $(\"user loof\").item.json;\n\n// 3. 중복 제거 (공고번호 bid_no 기준) - 중복 발송 방지\nconst uniqueBids = Array.from(new Map(allItems.map(b => [b.bid_no, b])).values());\n\n// 4. AI에게 넘길 '초정밀 데이터' 가공\nconst processedBids = uniqueBids.map(b => {\n    const lic = b.license_limit;\n    const reg = b.region_limit;\n    const itm = b.purchase_items;\n\n    // 면허, 지역, 품목 데이터를 AI 가독성 좋게 변환\n    const licenseText = (Array.isArray(lic) && lic.length > 0) \n        ? lic.map(l => l.lcnsLmtNm || l.licenseNm).join(\", \") : \"FACT_MISSING\";\n    \n    const regionText = (Array.isArray(reg) && reg.length > 0) \n        ? reg.map(r => r.prtcptPsblRgnNm || r.regionNm).join(\", \") : \"FACT_MISSING\";\n    \n    const itemsText = (Array.isArray(itm) && itm.length > 0) \n        ? itm.map(it => it.itemNm).join(\", \") : \"FACT_MISSING\";\n\n    return {\n        bid_no: b.bid_no,\n        bid_name: b.bid_name,\n        budget: b.price || 0, \n        participation_fee: b.participation_fee || 0,\n        deadline: b.deadline || b.bidClseDt || \"공고문 확인 필수\",\n        link: b.detail_url,\n        \n        // 팩트 데이터 전달\n        license_fact: licenseText,\n        region_fact: regionText,\n        items_fact: itemsText,\n        \n        // 🔥 [진실의 조각] 한글 파일 원문 데이터 포함!\n        rfp_content: b.rfp_text || \"공고서 파일 원문 데이터 지연 중(링크 확인 권장)\",\n        \n        joint_bidding: b.joint_bidding || (b.jointRqstYn === 'Y' ? \"허용\" : \"불허\"),\n        basis_price: b.basis_price || 0,\n        change_count: b.change_count || 0,\n        file_urls: b.file_links || \"상세페이지 확인\"\n    };\n});\n\n// 5. 적합도 정렬 (IT 키워드 최우선)\nprocessedBids.sort((a, b) => {\n    const aIT = (a.bid_name.includes(\"시스템\") || a.items_fact.includes(\"시스템\")) ? 1 : 0;\n    const bIT = (b.bid_name.includes(\"시스템\") || b.items_fact.includes(\"시스템\")) ? 1 : 0;\n    return bIT - aIT;\n});\n\n// 6. 최종 보따리 반환 (정예 3건으로 압축)\nreturn [{\n    company_info: profile,\n    today_bids: processedBids.slice(0, 3), \n    bid_count: uniqueBids.length,\n    report_date: new Date().toLocaleDateString('ko-KR')\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        -496
+      ],
+      "id": "24f231ce-fa1d-4821-8f60-1b3dadbab6e0",
+      "name": "DataAggregator"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=너는 대한민국 공공입찰 시장의 '데이터 검증관'이자 15년 경력의 '수주 전략 총괄 본부장'이야. \n전달된 데이터 중 [API 기반 팩트]와 [RFP 원문 텍스트]가 서로 충돌하는지 현미경처럼 분석해서 보고해. \n\n---\n### 🚨 [본부장의 '진실 추적' 3대 수칙]\n\n1. **[RFP 최우선 원칙]**: \n   - 만약 API 데이터(license_fact, region_fact)와 한글 파일 원문(rfp_content)의 내용이 다르다면, 무조건 **[rfp_content]**의 내용을 '진실'로 판정해. \n   - 예: API가 \"농약 면허\"라고 해도 RFP 본문에 \"소프트웨어사업자\"라고 되어 있으면 후자를 채택하고 \"조달청 데이터 오류 감지\"를 명시해.\n\n2. **[교차 검증 테이블 작성]**:\n   - 리포트 작성 시 [자격 요건] 항목에서 '데이터베이스(API)'와 '공고문 원문(RFP)'을 대조한 표를 반드시 포함해.\n\n3. **[의심 공고 경고]**:\n   - 데이터와 파일 내용이 너무 많이 다르거나, rfp_content가 깨져서 읽을 수 없는 경우 \"데이터 신뢰도 낮음 - 수동 확인 필수\" 경고를 빨간 사이렌 아이콘🚨과 함께 띄워.\n\n---\n\n### 📥 분석 재료\n- 우리 회사 프로필: {{ JSON.stringify($json.company_info) }}\n- 오늘의 상세 공고 데이터: {{ JSON.stringify($json.today_bids) }}\n\n---\n\n### 📄 리포트 양식 (무결성 검증 버전)\n\n============================================================\n[🏢 {{ $json.company_info.name }} - 데이터 무결성 검증 수주 전략 보고서]\n============================================================\n\n■ 1. 데이터 신뢰도 요약\n- 전체 분석 {{ $json.bid_count }}건 중 [팩트 일치 X건 / 데이터 충돌 X건]\n- 🚨 주의: 오늘 조달청 API 서버의 데이터 오염도가 [높음/낮음]으로 판단됩니다.\n\n============================================================\n■ 2. 🥇 BEST MATCH (RFP 원문 정밀 대조 결과)\n============================================================\n\n[공고명: 제목]\n------------------------------------------------------------\n판단등급: [최우선/적합] | 총 입찰 소요 예산: [수칙대로 계산]\n\n✅ 자격 요건 교차 검증 (API vs RFP)\n| 항목 | API 데이터 | RFP 원문 내용 | 최종 결과 |\n|------|------------|---------------|-----------|\n| 면허 | [license]  | [RFP 내용추출] | [🟢/🔴/⚠️] |\n| 지역 | [region]   | [RFP 내용추출] | [🟢/🔴/⚠️] |\n\n💡 본부장의 팩트 체크 코멘트\n- [진실 확인]: (예: \"API 데이터는 농약 면허를 요구하나, RFP 3페이지 확인 결과 SW사업자가 맞습니다. 팩트입니다.\")\n- [수주 비책]: (이 공고를 따기 위해 제안서 1페이지에 넣어야 할 핵심 문구 제언)\n- [수익 분석]: (예상 ROI 및 MM 시뮬레이션)\n\n🔗 [원본 공고 링크]: (link 값)\n📎 [RFP 원문 확인]: (file_urls 값)\n\n------------------------------------------------------------\n(※ 상위 3건 반복)\n\n============================================================\n⚠️ 법적 면책 조항\n본 리포트는 API와 RFP를 교차 검증한 결과이나, 행정적 오류 가능성이 상존합니다. \n최종 투찰 전 반드시 담당자 유선 확인을 권장합니다."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        -496
+      ],
+      "id": "d605cf88-c3ea-4bac-8da2-5b4564248587",
+      "name": "Message a model1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "y8UxcW1N5SYdSmRb",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 제미나이 보따리 속 깊숙이 숨은 텍스트를 정확하게 찾아냅니다.\nconst allReports = items.map(item => {\n  // 만약 simplified 모드면 item.json.text에 있고, \n  // 아니면 item.json.content.parts[0].text에 있습니다. \n  // 두 가지 경우를 다 대비한 안전한 코드입니다.\n  return item.json.text || item.json.content.parts[0].text;\n});\n\n// 2. 리포트 사이사이에 구분선을 넣어서 합칩니다.\nconst finalFullReport = allReports.join('\\n\\n' + '='.repeat(60) + '\\n\\n');\n\n// 3. 내보내기\nreturn {\n  combined_text: finalFullReport,\n  report_date: new Date().toLocaleDateString('ko-KR')\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        -496
+      ],
+      "id": "303cf1f0-8dce-48e2-8aff-9168403be7f2",
+      "name": "ReportJoiner"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $node[\"ReportJoiner\"].json.combined_text }}",
+        "name": "=SmartSeller_통합리포트_{{ $node[\"ReportJoiner\"].json.report_date }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {
+          "convertToGoogleDocument": false
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1392,
+        -224
+      ],
+      "id": "a8347c20-6066-4ce6-81f1-0486ee598155",
+      "name": "Create file from text",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jySzSwR0Ja1ocgbR",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $node[\"Create file from text\"].json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1808,
+        -224
+      ],
+      "id": "14ac3a69-4d8f-4955-9037-3f05aa61455e",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jySzSwR0Ja1ocgbR",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        576,
+        -80
+      ],
+      "id": "b4287d0b-85b8-4da9-bfa4-08c3784287ee",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "company_profiles"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        240
+      ],
+      "id": "23f0560d-8b0a-4928-a7ef-3c93c156c7f8",
+      "name": "Get many rows2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AXfDBvuu6X36mRaL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoServcPPSSrch?serviceKey=YOUR_PUBLIC_DATA_API_KEY&numOfRows=10&pageNo=1&inqryDiv=1&type=json&inqryBgnDt={{ $today.minus({ days: 1 }).format('yyyyMMdd') }}0000&inqryEndDt={{ $today.format('yyyyMMdd') }}2359",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "numOfRows",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        832,
+        160
+      ],
+      "id": "b04f92d2-14de-49cd-bc18-404d073599ad",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "url": "=https://apis.data.go.kr/1230000/ad/BidPublicInfoService//getBidPblancListInfoLicenseLimit?serviceKey=YOUR_PUBLIC_DATA_API_KEY&numOfRows=10&pageNo=1&inqryDiv=1&type=json&inqryBgnDt={{ $today.minus({ days: 1 }).format('yyyyMMdd') }}0000&inqryEndDt={{ $today.format('yyyyMMdd') }}2359",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        576,
+        160
+      ],
+      "id": "a5b1e9da-e10e-4da3-821c-3a3dd3c9a942",
+      "name": " License API (15번)",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoPrtcptPsblRgn?serviceKey=YOUR_PUBLIC_DATA_API_KEY&numOfRows=10&pageNo=1&inqryDiv=1&type=json&inqryBgnDt={{ $today.minus({ days: 1 }).format('yyyyMMdd') }}0000&inqryEndDt={{ $today.format('yyyyMMdd') }}2359",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        288,
+        160
+      ],
+      "id": "66073ed4-f915-4afd-a497-a3c80ed750a4",
+      "name": "Region API (16번)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "bid_snapshots",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $node[\"Get many rows1\"].json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "is_sent",
+              "fieldValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        80
+      ],
+      "id": "886d6ae1-4bdb-465a-9d99-ba3ccf6ebcac",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "AXfDBvuu6X36mRaL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1632,
+        240
+      ],
+      "id": "b12314af-9e66-4cac-a4ea-8dd273f5e9a0",
+      "name": "user loof"
+    },
+    {
+      "parameters": {
+        "url": "=https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoEorderAtchFileInfo?serviceKey=YOUR_PUBLIC_DATA_API_KEY&numOfRows=10&pageNo=1&inqryDiv=1&type=json&inqryBgnDt={{ $today.minus({ days: 1 }).format('yyyyMMdd') }}0000&inqryEndDt={{ $today.format('yyyyMMdd') }}2359",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -224,
+        160
+      ],
+      "id": "2bce81f8-6269-40c8-ae2c-b0f007dd26a6",
+      "name": "File Link API (20번)",
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "18": {
+      "main": [
+        [
+          {
+            "node": "File Link API (20번)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get many rows2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get many rows1": {
+      "main": [
+        [
+          {
+            "node": "DataAggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DataAggregator": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "ReportJoiner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReportJoiner": {
+      "main": [
+        [
+          {
+            "node": "Create file from text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create file from text": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows2": {
+      "main": [
+        [
+          {
+            "node": "user loof",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": " License API (15번)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " License API (15번)": {
+      "main": [
+        [
+          {
+            "node": "Region API (16번)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Region API (16번)": {
+      "main": [
+        [
+          {
+            "node": "18",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "user loof",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "user loof": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get many rows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Link API (20번)": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9d4557ba2a428fa62892bcefa8690e2213216d955ea45b3a983f0346745b4bcf"
+  }
+}
