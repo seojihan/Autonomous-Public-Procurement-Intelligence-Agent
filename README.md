@@ -7,6 +7,11 @@
 
 ---
 
+> 🎓 **This project was independently designed and built by a high school student.**  
+> Every component — from multi-API orchestration to AI-powered report generation — was self-taught and implemented without professional guidance.
+
+---
+
 ## 🧭 Overview
 
 **BidRadar AI** is a fully automated n8n workflow that acts as a 24/7 procurement analyst for your business. It pulls live bid announcements from Korea's Public Data Portal, enriches them with license, region, and item constraints, runs a deep cross-validation analysis via Gemini AI, and compiles everything into a formatted PDF report delivered by email — four times a day.
