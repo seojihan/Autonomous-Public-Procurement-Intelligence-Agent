@@ -1,0 +1,25 @@
+Hello. My name is Seo Jihan, and I developed an autonomous AI agent for collecting public bidding information.
+I'm not sure if anyone will read this, but I'm leaving this somewhat rough explanation about the development motivation behind this personal project, how to use it, and in what ways it can be applied. I apologize in advance if the .md file feels unnatural — it was written with the help of AI.
+First, let me explain my development motivation.
+Back when I was in 10th grade (I'm currently in 11th grade), I happened to learn about AI agents and automation systems. At first, the idea that "an AI can think on its own, without any human involvement, and produce results?" genuinely fascinated me, and that's what led me to start studying automation system development and AI agent development.
+I had originally planned to develop using Python with LangChain, or JavaScript with MCP, but when I came across a no-code tool called n8n, I became curious whether it was possible to build and fully operate something using n8n alone. So I decided to learn n8n and develop with it. Of course, I only later realized — in 11th grade — that writing actual code, rather than using a no-code tool, offers far greater versatility and is much easier to maintain.
+Anyway, after deciding to use n8n, I spent a lot of time thinking about what kind of service to build.
+Should I go with an AI that thinks for itself, uses tools, and derives results autonomously?
+Or should I build an AI agent that operates within a fixed structure, in a more limited way?
+I did consider that the fully autonomous approach — where the AI decides which tools to use on its own — could be well implemented with MCP, so I thought it would be better not to use that approach, and instead make the most of what n8n does best.
+While I was mulling over what project to build, I came across a story online about a small company that developed websites. They were complaining that it took far too much time to find good bidding information and public tender announcements worth pursuing.
+That's when it hit me — what if I built something that collects information in the morning, afternoon, and evening, has AI review and organize it, and then sends it to the user's Gmail?
+At the time, I thought it was a brilliant idea, and I got to work.
+I fired up Supabase for the first time in ages, connected the Gemini API, dug through the Public Data Portal API, and developed the automated AI agent. I spent almost the entire winter break of 10th grade completely absorbed in development (why did I do that to myself, you fool...)
+And then I finally finished it — only to run into a major problem.
+What was it? I discovered, far too late, that the AI couldn't read HWP (Hangul) files.
+And just like that... my effort and dedication ended up as something only half-complete.
+I've since found a way to extract text from HWP files, but... honestly, I've lost the passion I once had for this project, so I've decided to wrap it up here.
+...I can almost see the expressions on your faces as you read this.
+If you've made it this far, you're probably wondering: "Then why on earth did you publish this on GitHub?"
+To answer that — first, I published it hoping there might be someone out there who could make use of the overall workflow structure. In other words, the full workflow of collecting information in the morning, afternoon, evening, and late at night → storing it in Supabase → having Gemini refine it into a report → and sending it via Gmail. I uploaded it in case someone finds that structure useful. Though honestly, I doubt anyone will even read this far... haha.
+Second, I just didn't want all this effort to disappear without a trace. I wanted to leave some kind of record.
+Maybe it's a bit of a sulk. Maybe there's a little regret mixed in too.
+But mostly, I wrote this so that my future self can look back and think, "Ah, there was a time I was this absorbed in something."
+(Are you reading this, future me?)
+Anyway, I'll wrap up here. Thank you for reading this long post.
